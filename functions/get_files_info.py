@@ -16,6 +16,7 @@ def get_files_info(working_directory, directory=None):
             is_file = os.path.isfile(joined_path+"/"+file)
             files_with_data.append(f"- {file}: file_size={size} bytes, is_dir={not is_file}\n")
         return "".join(files_with_data)
+    
     except Exception as e:
         return f'Error: {e}'
 
