@@ -1,5 +1,6 @@
 import os
 import subprocess
+from google.genai import types
 
 def run_python_file(working_directory, file_path):
     work_path = os.path.abspath(working_directory)
@@ -25,8 +26,16 @@ def run_python_file(working_directory, file_path):
     except Exception as e:
         return f"Error: executing Python file: {e}"
 
-
-# # # TEST
-# if __name__ == "__main__":
-#     result = run_python_file("calculator", "tests.py")
-
+schema_run_python_file = types.FunctionDeclaration(
+    name = "run_python_file",
+    description = "Runs a python file and it returns is data (stdout and stderr)",
+    parameters = types.Schema(
+        type = types.Type.OBJECT,
+        properties = {
+            "file_path": types.Schema(
+                type = types.Type.STRING,
+                description = "The file_path to get the file from. If not provided or a wrong path is given it returns an error message",
+            ),
+        },
+    ),
+)

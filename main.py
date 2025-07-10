@@ -3,8 +3,9 @@ import sys
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from functions.get_files_info import schema_get_files_info
 from prompts import system_prompt
+from functions.call_functions import available_functions
+from functions.function_call import call_function
 
 def main():
     load_dotenv()
@@ -13,12 +14,6 @@ def main():
     api_key = os.environ.get("GEMINI_API_KEY")
     client = genai.Client(api_key=api_key)
     command_lst = ["--verbose"]
-    
-    available_functions = types.Tool(
-        function_declarations=[
-            schema_get_files_info,
-        ]
-    )
 
     args = [m for m in sys.argv[1:] if m not in command_lst]
     opt_command = False
@@ -27,7 +22,7 @@ def main():
         opt_command = True
 
     if not args:
-        print("Escribile algo al coso nabo de mierda")
+        print("please write something to the ai")
         sys.exit(1)
 
     user_prompt= " ".join(args)
@@ -35,7 +30,6 @@ def main():
     messages = [
         types.Content(parts=[types.Part(text=user_prompt)], role="user")
     ]
-
 
 
     response = client.models.generate_content(
@@ -47,12 +41,21 @@ def main():
         ),
 
     )
+
+    if not response.function_calls:
+        print("Please make sure the file exists or its a valid function")
+        return
+
+    function_call_result = call_function(response.function_calls[0],opt_command)
+
+    if not function_call_result.parts[0].function_response.response:
+        print("Error: Fatal error")
+        return
+
     if opt_command:
-        print(f"User prompt: {user_prompt}")
-        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
-    for function_call_part in response.function_calls:
-        print(f"Calling function: {function_call_part.name}({function_call_part.args})")
+        print(f"-> {function_call_result.parts[0].function_response.response}")
+        return
+
 
 
 if __name__ == "__main__":
